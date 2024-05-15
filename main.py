@@ -35,10 +35,10 @@ async def file_upload(file: UploadFile = File(...)):
 
 
 def transform_excel(file):
-    data = pd.read_excel(file)
+    data = pd.read_excel(file, engine="openpyxl")
     return data
 
 
 def transform_csv(file):
-    data = pd.read_csv(file, sep="delimiter")
+    data = pd.read_csv(file, sep="delimiter", engine="python")
     return data
