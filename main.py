@@ -1,63 +1,44 @@
-import shutil, io
 from fastapi import FastAPI, File, UploadFile, HTTPException
-import openpyxl
 from pathlib import Path
-from typing import Callable
+import pandas as pd
 
 
-class Input:
-    name: str
-    type: str
-
-
-FILE_PATH = "./temp_data/temp_file.xlsx"
-FOLDER_PATH = Path("./temp_data/")
+VALID_APPLICATION_TYPES = [
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv",
+]
 
 app = FastAPI()
 
 
 @app.get("/")
 def read_root():
-    return {"message": "Hello World"}
-
-
-@app.get("/get-staged")
-async def get_staged_files():
-    contents_iter = FOLDER_PATH.iterdir()
-    contents = [c.name for c in contents_iter]
-    # contents = [*contents_iter]
-    return {"staged_files": contents}
-
-    assert file is not None
-    assert file.filename.endswith(".xlsx")
-    try:
-        # TODO: Append filename instead of renaming to temp file
-        with open(FILE_PATH, "wb") as f:
-            f.write(file.file.read())
-    except Exception as E:
-        raise HTTPException(
-            status_code=405, detail="Uploaded file is not a valid Excel format."
-        )
-    finally:
-        f.close()
-        return {"message": "File received successfully."}
+    return {"message": "Hello World!"}
 
 
 @app.post("/file-upload")
-async def file_upload(file: UploadFile):
-    assert file is not None
-    if file.filename.endswith(".xlsx") == False:
-        raise HTTPException(
-            status_code=405, detail="Uploaded file is not a valid Excel format."
-        )
+async def file_upload(file: UploadFile = File(...)):
     try:
         # TODO: Append filename instead of renaming to temp file
-        with open(FILE_PATH, "wb") as f:
-            f.write(file.file.read())
-    except Exception as E:
-        raise HTTPException(
-            status_code=405, detail="Uploaded file is not a valid Excel format."
-        )
-    finally:
-        f.close()
-        return {"message": "File received successfully."}
+        if file.content_type != VALID_APPLICATION_TYPES[0]:
+            transformed_data = transform_csv(file.file)
+        else:
+            transformed_data = transform_excel(file.file)
+        response_data = transformed_data.to_json(orient="records")
+        return {
+            "message": "File processed successfully",
+            "data": response_data,
+            "application-type": file.content_type,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=405, detail={e})
+
+
+def transform_excel(file):
+    data = pd.read_excel(file, engine="openpyxl")
+    return data
+
+
+def transform_csv(file):
+    data = pd.read_csv(file, sep="delimiter", engine="python")
+    return data

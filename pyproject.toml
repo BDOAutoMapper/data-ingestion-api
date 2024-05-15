@@ -1,0 +1,25 @@
+[project]
+name = "data-ingestion-api"
+version = "0.0.1"
+requires-python = ">=3.11, <3.12"
+
+dependencies = [
+    "fastapi == 0.111.0",
+    "pandas == 2.2.2",
+    "openpyxl == 3.1.2",
+    "httpx==0.27.0"
+]
+[project.optional-dependencies]
+dev = ["ipykernel == 6.25.2"]
+test = ["pytest == 8.2.0", "faker == 25.2.0"]
+
+[project.urls]
+homepage = "https://github.com/BDOAutoMapper/data-ingestion-api"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools]
+packages = []
